@@ -7,7 +7,8 @@
 //   有收集到照片就一定扭過蛋 → 「聖誕快樂」
 //   帶麻吉去公園的最佳紀錄（maji-walk-best）→ 走到 300 / 600 / 1000 公尺
 //   跟令狗一起收集紅蘿蔔玩過幾局（linggou-skate 的 plays）→ 玩 30 次
-// 上線前沒有記錄、只能從零開始的：走不到 100 公尺、帶麻吉去公園玩幾次、看過哪些婚紗照、點愛心、清積雪、四季、日夜、聽完音樂
+//   跟令狗一起收集紅蘿蔔累積收集幾根（linggou-skate 的 total）→ 累積 520 / 1314 根
+// 上線前沒有記錄、只能從零開始的：走不到 100 公尺、帶麻吉去公園玩幾次、5 條命／沒撞到抵達公園、看過哪些婚紗照、點愛心、清積雪、四季、日夜、聽完音樂
 
 import { load } from '../storage.js';
 import { markItem, recordMax } from './progress.js';
@@ -26,4 +27,7 @@ export function creditEarlierProgress() {
 
   const skatePlays = Number(load('linggou-skate', {})?.plays) || 0;
   if (skatePlays > 0) recordMax('skatePlays', skatePlays, { quiet: true });
+
+  const skateTotal = Number(load('linggou-skate', {})?.total) || 0;
+  if (skateTotal > 0) recordMax('skateTotal', skateTotal, { quiet: true });
 }

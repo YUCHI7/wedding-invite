@@ -143,6 +143,7 @@ export function createGame(root, { onClose } = {}) {
   const owner = { x: 0.8, d: 0, vx: 0, vd: 0, lean: 0, yaw: 0, pull: 0 };
   const dog = { x: 0, d: 2.4, vx: 0, vd: 0, yaw: 0, mood: 'sit', t: Infinity, pending: null, wander: 0 };
   let lives = LIVES;
+  let hits = 0;             // 這一局撞到幾次（無敵時撞到的不算）
   let invuln = 0;
   let starT = 0;
   let boost = 1;           // 目前的速度倍率：吃到星星時慢慢加到 BOOST，結束後慢慢回到 1
@@ -366,6 +367,7 @@ export function createGame(root, { onClose } = {}) {
       return false;
     }
     lives--;
+    hits++;
     renderLives();
     popup(label, actorObj(who), 'bad');
     if (lives > 0) return false;
@@ -788,6 +790,7 @@ export function createGame(root, { onClose } = {}) {
     street.setPark(parkD);
     obstacles.planRace(raceStart, parkD);
     lives = LIVES;
+    hits = 0;
     invuln = starT = elapsed = maxD = progress = 0;
     boost = 1;
     base = 6.4;
@@ -831,6 +834,8 @@ export function createGame(root, { onClose } = {}) {
     increment('walkPlays');
     if (!won && m < WALK_SHORT_METERS) increment('walkShort');
     if (!won && m < WALK_TINY_METERS) increment('walkTiny');
+    if (won && lives === LIVES) increment('walkFullLives');
+    if (won && !hits) increment('walkFlawless');
     return { m, best: load(BEST_KEY, best), record };
   };
 

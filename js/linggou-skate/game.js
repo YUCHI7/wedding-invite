@@ -2,7 +2,7 @@
 // 側面看的碗形溜冰場（像洛克人、卡比那樣的 2D 畫面），手機橫著玩
 // 令狗穿冰刀鞋在冰上滑（有慣性、衝太快會滑倒、衝出坡頂會撞牆），接住天上掉下來的紅蘿蔔，
 // 踩著跳台跳到最上面，放進紅蘿蔔箱；一次放越多越划算（1 / 3 / 6 分），3 條命用完就結束
-// 干擾：炸彈（第 2 波起，碰到就爆，沒碰到過一陣子會熄掉）、小豬（第 3 波起，令狗會失控衝過去）、麻吉（第 4 波起，搶背著的紅蘿蔔）
+// 干擾：炸彈（第 2 波起，碰到就爆，沒碰到過一陣子會熄掉）、小豬（第 3 波起，令狗會失控衝過去，但還能跳起來躲炸彈）、麻吉（第 4 波起，搶背著的紅蘿蔔）
 // 好東西：愛心、黃金紅蘿蔔、連續接住 12 根的 FEVER、每 5 波一次的紅蘿蔔雨；後面的關卡跳台會移動
 // 地獄模式：分數到 150 起「跳」「左」「右」每 10 秒亂換，偶爾起濃霧
 // 瘋狂模式：分數到 200 起按鍵每 5 秒亂換、炸彈比紅蘿蔔多，偶爾畫面突然全黑
@@ -223,7 +223,7 @@ export function createGame(root, { onClose } = {}) {
     run = {
       lives: T.lives, score: 0, wave: 1, waveT: 0, bonus: false, time: 0,
       combo: 0, fever: 0, feverCount: 0, hot: false, hotT: 0, nextHot: rand(16, 22),
-      timers: { carrot: 0.6, bomb: 4, pig: rand(6, 10), maji: rand(3, 6), gold: rand(18, 26), heart: rand(25, 35) },
+      timers: { carrot: 0.6, bomb: 4, pig: rand(6, 10), maji: rand(3, 6), gold: rand(18, 26), heart: rand(22, 31) },
       stats: { score: 0, air: 0, triple: 0, wave: 1, fever: 0, gold: 0, ride: 0, pig: 0, recover: 0, hot: 0, nohit: 0, rim: 0, dodge: 0, caught: 0, stolen: 0, slips: 0, bombs: 0, walls: 0, maxDrop: 0 },
       noHitT: 0, completed: new Set(), boxFill: 0,
       hell: 0, swapT: 0, blind: null, blindT: 0,
@@ -525,7 +525,7 @@ export function createGame(root, { onClose } = {}) {
       tm.bomb = (hell2 ? T.hellBombGap : Math.max(1.2, 4.4 - 0.45 * (w - 2))) * rand(0.8, 1.2);
     }
     if (w >= 3 && (tm.gold -= dt) <= 0) { spawnCarrot(true); tm.gold = rand(20, 28); }
-    if (run.lives < T.lives && (tm.heart -= dt) <= 0) { spawnHeart(); tm.heart = rand(28, 38); }
+    if (run.lives < T.lives && (tm.heart -= dt) <= 0) { spawnHeart(); tm.heart = rand(24, 33); }
     const calm = dog.mode === 'normal' && dog.hurtT <= 0;
     if (w >= 3 && !run.bonus && !items.pig && calm && (tm.pig -= dt) <= 0) { spawnPig(); tm.pig = rand(16, 24); }
     // 麻吉：第 4 波起每 8～13 秒來一次；時間到了，等令狗背著紅蘿蔔就衝進來
@@ -594,6 +594,8 @@ export function createGame(root, { onClose } = {}) {
   function updateDog(dt) {
     if (dog.modeT > 0) { dog.modeT -= dt; if (dog.modeT <= 0) dog.mode = 'normal'; }
     const ctrl = dog.mode === 'normal' || dog.mode === 'soot';
+    // 衝向小豬時方向不能控制，但還是可以跳，不然路上有炸彈躲不掉
+    const canJump = ctrl || dog.mode === 'love';
     let dir = ctrl ? (input.right ? 1 : 0) - (input.left ? 1 : 0) : 0;
     if (dog.mode === 'love' && items.pig) dir = Math.sign(items.pig.x - dog.x) || 1;
     const x0 = dog.x;
@@ -640,7 +642,7 @@ export function createGame(root, { onClose } = {}) {
       if (speed >= red && dog.mode === 'normal') { dog.slip += dt; if (dog.slip >= T.slipTime) { dog.slip = 0; hurt('slip'); } }
       else dog.slip = Math.max(0, dog.slip - dt * 2);
 
-      if (input.jumpPressed && ctrl) {
+      if (input.jumpPressed && canJump) {
         dog.ground = false;
         dog.vx = dog.v * k;
         dog.vy = T.jump + (dog.plat ? Math.min(0, dog.plat.dy / dt) : 0);
@@ -1069,6 +1071,7 @@ export function createGame(root, { onClose } = {}) {
     const isBest = run.score > save.best;
     save.best = Math.max(save.best, run.score);
     save.total += run.score;
+    recordMax('skateTotal', save.total);
     save.plays++;
     increment('skatePlays');
     clearRun();
